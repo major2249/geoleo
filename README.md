@@ -1,58 +1,70 @@
-# AI or Earth? - GeoGuesser Game
+# EduCert - Decentralized Educational Certificate Platform
 
-A modern web-based geography and AI detection game where players must guess both the location of an image and whether it's real or AI-generated.
+A comprehensive blockchain-based platform for issuing, storing, and verifying educational certificates using Ethereum, IPFS, and Discord integration.
 
-## 🎮 Game Features
+## 🌟 Features
 
-- **Dual Challenge**: Guess both location and authenticity (real vs AI-generated)
-- **Interactive World Map**: Click to guess locations using Leaflet.js
-- **Scoring System**: Points based on accuracy and proximity
-- **Daily Challenges**: Same 5 images for all players each day
-- **Leaderboards**: Daily and all-time high scores
-- **Modern UI**: Beautiful, responsive design with animations
-- **Timer-Based Rounds**: 60 seconds per round, 5 rounds per game
+### Core Functionality
+- **Blockchain Certificate Issuance**: Issue tamper-proof certificates as NFTs on Ethereum
+- **IPFS Storage**: Decentralized storage for certificate files and metadata
+- **QR Code Verification**: Instant verification via QR codes or certificate IDs
+- **Multi-stakeholder Support**: Separate dashboards for institutions, students, and verifiers
+- **Certificate Revocation**: Institutions can revoke certificates when necessary
+
+### Advanced Features
+- **Discord Bot Integration**: Automated scraping and posting of free certification opportunities
+- **Free Certificate Discovery**: Curated list of free certificates updated daily
+- **Responsive Design**: Mobile-first design with modern UI/UX
+- **Real-time Updates**: Live updates for certificate status and verification
+- **Batch Operations**: Bulk certificate issuance for institutions
 
 ## 🏗️ Architecture
 
 ### Frontend (React + TypeScript)
 - **React 18** with TypeScript for type safety
-- **Tailwind CSS** for styling and responsive design
-- **Leaflet.js** for interactive world maps
-- **Lucide React** for consistent iconography
-- **Vite** for fast development and building
+- **Tailwind CSS** for responsive design
+- **React Router** for navigation
+- **Ethers.js** for blockchain interaction
+- **IPFS HTTP Client** for decentralized storage
 
 ### Backend (Node.js + Express)
 - **Express.js** API server
+- **Multer** for file uploads
 - **CORS** enabled for cross-origin requests
-- **UUID** for unique identifiers
-- **Mock data** for development (easily replaceable with real APIs)
+- **Mock blockchain** for development
 
-### Key Components
-- `GameInterface`: Main game UI with image display and map
-- `GameMap`: Interactive Leaflet map for location guessing
-- `Timer`: Visual countdown timer with color coding
-- `GameResults`: Comprehensive results and scoring breakdown
-- `MainMenu`: Landing page with leaderboards and instructions
+### Blockchain (Solidity)
+- **ERC-721** NFT standard for certificates
+- **OpenZeppelin** contracts for security
+- **Upgradeable** contract architecture
+- **Role-based** access control
+
+### Discord Bot (Discord.js)
+- **Automated scraping** of free certificates
+- **Daily posting** to Discord channels
+- **Web scraping** with Cheerio
+- **Cron scheduling** for regular updates
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js 18+ and npm
-- Modern web browser with JavaScript enabled
+- MetaMask or compatible Web3 wallet
+- Discord account (for bot features)
 
 ### Installation
 
 1. **Clone and install dependencies:**
 ```bash
 git clone <repository-url>
-cd ai-or-earth-geoguesser
+cd educert-dapp
 npm install
 ```
 
 2. **Set up environment variables:**
 ```bash
 cp .env.example .env
-# Edit .env with your API keys (optional for development)
+# Edit .env with your configuration
 ```
 
 3. **Start the development servers:**
@@ -67,140 +79,197 @@ Backend (in a separate terminal):
 npm run server
 ```
 
+Discord Bot (optional, in a separate terminal):
+```bash
+npm run bot
+```
+
 4. **Open your browser:**
-Navigate to `http://localhost:5173` to play the game!
+Navigate to `http://localhost:5173` to access the application!
 
-## 🎯 How to Play
+## 📱 Usage Guide
 
-1. **Analyze the Image**: Study the location photo for visual clues
-2. **Make Your Prediction**: Decide if it's real or AI-generated
-3. **Guess the Location**: Click on the world map to pinpoint the location
-4. **Submit & Score**: Earn points based on accuracy and proximity
-5. **Complete 5 Rounds**: Build your total score across all rounds
+### For Educational Institutions
 
-### Scoring System
-- **Correct AI/Real Prediction**: +2,500 points
-- **Location Accuracy**: Up to +5,000 points (based on distance)
-- **Perfect Round Maximum**: 7,500 points
-- **Game Maximum**: 37,500 points
+1. **Connect Wallet**: Connect your MetaMask wallet
+2. **Issue Certificates**: Navigate to the Issue page
+3. **Fill Certificate Details**: Enter student information and certificate data
+4. **Upload Files**: Optionally upload certificate PDFs or images
+5. **Submit to Blockchain**: Certificate is minted as NFT and stored on IPFS
+6. **Generate QR Code**: Receive QR code for easy verification
 
-## 🔧 Production Setup
+### For Students
 
-### External APIs Integration
+1. **Connect Wallet**: Connect your wallet to view certificates
+2. **View Dashboard**: See all certificates issued to your address
+3. **Share Certificates**: Generate QR codes or share verification links
+4. **Download Certificates**: Save QR codes and certificate data
 
-For production deployment, integrate these APIs:
+### For Employers/Verifiers
 
-1. **Image Sources:**
-   - Google Street View API for real location images
-   - OpenAI DALL-E or Stability AI for AI-generated images
+1. **Visit Verify Page**: No wallet connection required
+2. **Scan QR Code**: Use camera to scan certificate QR codes
+3. **Manual Verification**: Enter certificate token ID manually
+4. **View Results**: See complete certificate details and blockchain verification
 
-2. **Map Services:**
-   - Google Maps API or continue with OpenStreetMap
+## 🔧 Configuration
 
-3. **Database:**
-   - MongoDB or Firebase for user data and scores
-   - Redis for session management and caching
+### Blockchain Setup
 
-### Environment Variables
-Set these in your production environment:
-```
-OPENAI_API_KEY=your_key
-GOOGLE_MAPS_API_KEY=your_key
-MONGODB_URI=your_connection_string
+For production deployment:
+
+1. **Deploy Smart Contract:**
+```bash
+# Using Hardhat or Truffle
+npx hardhat deploy --network mainnet
 ```
 
-### Deployment Options
+2. **Update Contract Address:**
+```typescript
+// src/contracts/EduCertContract.ts
+const CONTRACT_ADDRESS = "your_deployed_contract_address";
+```
 
-**Frontend (Vercel/Netlify):**
+### IPFS Configuration
+
+1. **Infura IPFS Setup:**
+```env
+IPFS_PROJECT_ID=your_infura_project_id
+IPFS_PROJECT_SECRET=your_infura_project_secret
+```
+
+2. **Alternative IPFS Providers:**
+- Pinata
+- Fleek
+- Local IPFS node
+
+### Discord Bot Setup
+
+1. **Create Discord Application:**
+   - Go to Discord Developer Portal
+   - Create new application and bot
+   - Copy bot token
+
+2. **Configure Bot:**
+```env
+DISCORD_BOT_TOKEN=your_bot_token
+DISCORD_CHANNEL_ID=your_channel_id
+```
+
+3. **Invite Bot to Server:**
+   - Generate invite link with necessary permissions
+   - Add bot to your Discord server
+
+## 🛡️ Security Features
+
+### Smart Contract Security
+- **Access Control**: Role-based permissions for certificate issuance
+- **Input Validation**: Comprehensive validation of all inputs
+- **Reentrancy Protection**: Guards against reentrancy attacks
+- **Upgrade Safety**: Proxy pattern for safe contract upgrades
+
+### Data Protection
+- **IPFS Encryption**: Optional encryption for sensitive certificate data
+- **Wallet Security**: Private key never leaves user's device
+- **API Rate Limiting**: Protection against abuse and spam
+- **Input Sanitization**: XSS and injection attack prevention
+
+## 📊 Database Schema
+
+### Certificates Collection
+```javascript
+{
+  tokenId: Number,
+  student: String, // Wallet address
+  ipfsHash: String,
+  certificateType: String,
+  institutionName: String,
+  issuer: String, // Institution wallet address
+  timestamp: Number,
+  isValid: Boolean,
+  metadata: {
+    studentName: String,
+    courseName: String,
+    grade: String,
+    issueDate: String,
+    expiryDate: String,
+    description: String
+  }
+}
+```
+
+### Free Certificates Collection
+```javascript
+{
+  id: String,
+  title: String,
+  provider: String,
+  description: String,
+  url: String,
+  category: String,
+  duration: String,
+  level: String,
+  rating: Number,
+  addedDate: String,
+  tags: [String]
+}
+```
+
+## 🤖 Discord Bot Features
+
+### Automated Scraping
+- **Daily Scraping**: Runs every day at 9 AM
+- **Multiple Sources**: Coursera, edX, FutureLearn, and more
+- **Duplicate Detection**: Filters out duplicate certificates
+- **Rate Limiting**: Respectful scraping with delays
+
+### Discord Integration
+- **Rich Embeds**: Beautiful certificate announcements
+- **Manual Commands**: `!scrape` for manual updates
+- **Error Handling**: Robust error handling and logging
+- **Webhook Support**: API integration for data synchronization
+
+## 🌐 Deployment
+
+### Frontend Deployment (Vercel/Netlify)
 ```bash
 npm run build
 # Deploy the 'dist' folder
 ```
 
-**Backend (Railway/Render/Heroku):**
+### Backend Deployment (Railway/Render)
 ```bash
-# Set NODE_ENV=production
-# Configure your database connection
+# Set environment variables
 # Deploy with Docker or buildpack
 ```
 
-## 🛡️ Anti-Cheat Measures
+### Smart Contract Deployment
+```bash
+# Mainnet deployment
+npx hardhat deploy --network mainnet
 
-- **Timer Enforcement**: Server-side validation of submission times
-- **Image Metadata Removal**: Strip EXIF data that might reveal locations
-- **Rate Limiting**: Prevent rapid-fire submissions
-- **Daily Challenge Consistency**: Same images for all players
-- **Score Validation**: Server-side score calculation verification
-
-## 📊 Database Schema
-
-### Users Collection
-```javascript
-{
-  _id: ObjectId,
-  email: String,
-  name: String,
-  avatar: String,
-  bestScore: Number,
-  gamesPlayed: Number,
-  createdAt: Date
-}
+# Polygon deployment
+npx hardhat deploy --network polygon
 ```
-
-### GameSessions Collection
-```javascript
-{
-  _id: ObjectId,
-  userId: ObjectId,
-  rounds: [{
-    imageId: String,
-    userGuess: { lat: Number, lng: Number },
-    userPrediction: String, // 'ai' | 'real'
-    score: Number,
-    distance: Number,
-    timeSpent: Number
-  }],
-  totalScore: Number,
-  isDailyChallenge: Boolean,
-  completedAt: Date
-}
-```
-
-### DailyChallenge Collection
-```javascript
-{
-  _id: ObjectId,
-  date: String, // YYYY-MM-DD
-  images: [{
-    id: String,
-    url: String,
-    isAI: Boolean,
-    location: { lat: Number, lng: Number },
-    prompt: String // for AI images
-  }]
-}
-```
-
-## 🎨 Design System
-
-- **Colors**: Blue (#3B82F6) primary, Purple (#8B5CF6) secondary
-- **Typography**: Inter font family with clear hierarchy
-- **Spacing**: 8px base grid system
-- **Components**: Consistent button styles, cards, and animations
-- **Responsive**: Mobile-first design with breakpoints at 768px and 1024px
 
 ## 🔮 Future Enhancements
 
-- **Multiplayer Mode**: Real-time competition with Socket.io
-- **User Accounts**: Google OAuth login and persistent profiles
-- **Advanced AI**: More sophisticated AI-generated images
-- **Mobile App**: React Native version for iOS/Android
-- **Streaming Mode**: 360° panoramic images
-- **Custom Challenges**: User-generated content and private rooms
+### Planned Features
+- **Multi-chain Support**: Deploy on multiple blockchains
+- **Advanced Analytics**: Certificate issuance and verification metrics
+- **API Integrations**: Integration with learning management systems
+- **Mobile App**: React Native mobile application
+- **Batch Operations**: Bulk certificate issuance tools
+
+### Scalability Improvements
+- **Layer 2 Solutions**: Polygon, Arbitrum integration
+- **IPFS Clustering**: Distributed IPFS storage
+- **Caching Layer**: Redis for improved performance
+- **CDN Integration**: Global content delivery
 
 ## 📄 License
 
-MIT License - feel free to use this project as a foundation for your own geography games!
+MIT License - feel free to use this project as a foundation for your own educational certificate platform!
 
 ## 🤝 Contributing
 
@@ -210,6 +279,13 @@ MIT License - feel free to use this project as a foundation for your own geograp
 4. Add tests if applicable
 5. Submit a pull request
 
+## 📞 Support
+
+For support and questions:
+- Create an issue on GitHub
+- Join our Discord community
+- Email: support@educert.dev
+
 ---
 
-**Ready to test your geography and AI detection skills? Start playing AI or Earth!** 🌍🤖
+**Ready to revolutionize educational credentials? Start building with EduCert!** 🎓🔗

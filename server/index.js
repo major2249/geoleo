@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -11,316 +13,269 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Mock data - in production, this would come from a database
-let leaderboard = {
-  daily: [],
-  allTime: []
-};
-
-// Daily challenge images - these would be generated/selected once per day
-let dailyChallengeImages = null;
-let dailyChallengeDate = null;
-
-// Expanded mock real locations with more diverse images
-const mockRealLocations = [
-  // European Cities
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1386604/pexels-photo-1386604.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 48.8566, lng: 2.3522, address: 'Paris, France' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/2166711/pexels-photo-2166711.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 51.5074, lng: -0.1278, address: 'London, UK' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1797161/pexels-photo-1797161.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 41.9028, lng: 12.4964, address: 'Rome, Italy' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1388030/pexels-photo-1388030.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: -33.8688, lng: 151.2093, address: 'Sydney, Australia' }
-  },
-  
-  // Asian Cities
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 35.6762, lng: 139.6503, address: 'Tokyo, Japan' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/2412603/pexels-photo-2412603.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 22.3193, lng: 114.1694, address: 'Hong Kong' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1007426/pexels-photo-1007426.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 1.3521, lng: 103.8198, address: 'Singapore' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1010657/pexels-photo-1010657.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 28.6139, lng: 77.2090, address: 'New Delhi, India' }
-  },
-  
-  // American Cities
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1738986/pexels-photo-1738986.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 40.7589, lng: -73.9851, address: 'New York, USA' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1680247/pexels-photo-1680247.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 34.0522, lng: -118.2437, address: 'Los Angeles, USA' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1519088/pexels-photo-1519088.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 45.5017, lng: -73.5673, address: 'Montreal, Canada' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1804177/pexels-photo-1804177.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: -22.9068, lng: -43.1729, address: 'Rio de Janeiro, Brazil' }
-  },
-  
-  // Natural Landmarks
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 36.1069, lng: -112.1129, address: 'Grand Canyon, USA' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 46.5197, lng: 7.4815, address: 'Swiss Alps, Switzerland' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1450353/pexels-photo-1450353.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 64.0685, lng: -21.9422, address: 'Reykjavik, Iceland' }
-  },
-  
-  // African and Middle Eastern
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1591373/pexels-photo-1591373.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 29.9792, lng: 31.1342, address: 'Cairo, Egypt' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1320684/pexels-photo-1320684.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: -33.9249, lng: 18.4241, address: 'Cape Town, South Africa' }
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1534560/pexels-photo-1534560.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: false,
-    location: { lat: 25.2048, lng: 55.2708, address: 'Dubai, UAE' }
-  }
-];
-
-// Expanded AI-generated style images (using real photos as placeholders)
-const mockAIImages = [
-  // Futuristic Cities
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/460741/pexels-photo-460741.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A futuristic cyberpunk city with neon lights and flying cars at night'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/2166559/pexels-photo-2166559.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'An underwater city with coral buildings and bioluminescent streets'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1484759/pexels-photo-1484759.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A floating island city in the clouds with waterfalls'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A desert oasis with crystal formations and purple sand'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1387174/pexels-photo-1387174.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A magical forest with glowing trees and floating rocks'
-  },
-  
-  // Fantasy Landscapes
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1323550/pexels-photo-1323550.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'An alien planet with multiple moons and purple vegetation'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1624438/pexels-photo-1624438.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A steampunk city with brass towers and steam-powered vehicles'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1366919/pexels-photo-1366919.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A post-apocalyptic wasteland with overgrown ruins'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1323712/pexels-photo-1323712.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A medieval fantasy castle floating in space'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1366630/pexels-photo-1366630.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'An ice palace with aurora borealis and crystal spires'
-  },
-  
-  // Surreal Environments
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1323712/pexels-photo-1323712.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A city built inside a giant tree with spiral walkways'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1366919/pexels-photo-1366919.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A volcanic landscape with lava rivers and obsidian structures'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1323550/pexels-photo-1323550.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A mirror dimension city with inverted gravity'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1624438/pexels-photo-1624438.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A clockwork mechanical landscape with gears and springs'
-  },
-  {
-    id: uuidv4(),
-    url: 'https://images.pexels.com/photos/1366630/pexels-photo-1366630.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    isAI: true,
-    prompt: 'A candy-colored dreamscape with impossible architecture'
-  }
-];
-
-// Helper function to generate random images for a game
-const generateGameImages = (isDailyChallenge = false) => {
-  if (isDailyChallenge) {
-    const today = new Date().toDateString();
-    
-    // Generate daily challenge images if not already generated for today
-    if (!dailyChallengeImages || dailyChallengeDate !== today) {
-      const realImages = [...mockRealLocations].sort(() => Math.random() - 0.5).slice(0, 3);
-      const aiImages = [...mockAIImages].sort(() => Math.random() - 0.5).slice(0, 2);
-      
-      dailyChallengeImages = [...realImages, ...aiImages].sort(() => Math.random() - 0.5);
-      dailyChallengeDate = today;
+// Configure multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, and PDF files are allowed.'));
     }
-    
-    return dailyChallengeImages;
   }
-  
-  // Regular game - random selection from expanded pool
-  const realImages = [...mockRealLocations].sort(() => Math.random() - 0.5).slice(0, 3);
-  const aiImages = [...mockAIImages].sort(() => Math.random() - 0.5).slice(0, 2);
-  
-  return [...realImages, ...aiImages].sort(() => Math.random() - 0.5);
+});
+
+// Mock database
+let certificates = [];
+let institutions = [];
+let students = [];
+
+// Mock IPFS storage (in production, this would use actual IPFS)
+const mockIPFS = new Map();
+
+// Helper function to generate mock IPFS hash
+const generateIPFSHash = (data) => {
+  return 'Qm' + crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex').substring(0, 44);
 };
 
 // Routes
-app.get('/api/game/images', (req, res) => {
-  try {
-    const isDailyChallenge = req.query.daily === 'true';
-    const images = generateGameImages(isDailyChallenge);
-    res.json(images);
-  } catch (error) {
-    console.error('Error generating game images:', error);
-    res.status(500).json({ error: 'Failed to generate game images' });
-  }
-});
-
-app.post('/api/game/score', (req, res) => {
-  try {
-    const { score, isDailyChallenge } = req.body;
-    
-    const entry = {
-      userId: uuidv4(),
-      userName: `Player${Math.floor(Math.random() * 10000)}`,
-      score,
-      date: new Date().toISOString()
-    };
-    
-    if (isDailyChallenge) {
-      leaderboard.daily.push(entry);
-      leaderboard.daily.sort((a, b) => b.score - a.score);
-      leaderboard.daily = leaderboard.daily.slice(0, 10); // Keep top 10
-    }
-    
-    leaderboard.allTime.push(entry);
-    leaderboard.allTime.sort((a, b) => b.score - a.score);
-    leaderboard.allTime = leaderboard.allTime.slice(0, 10); // Keep top 10
-    
-    res.json({ success: true, rank: leaderboard.allTime.findIndex(e => e.userId === entry.userId) + 1 });
-  } catch (error) {
-    console.error('Error submitting score:', error);
-    res.status(500).json({ error: 'Failed to submit score' });
-  }
-});
-
-app.get('/api/game/leaderboard', (req, res) => {
-  try {
-    res.json(leaderboard);
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    res.status(500).json({ error: 'Failed to fetch leaderboard' });
-  }
-});
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    service: 'EduCert API'
+  });
+});
+
+// Upload file to mock IPFS
+app.post('/api/ipfs/upload', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    const hash = generateIPFSHash(req.file.buffer);
+    mockIPFS.set(hash, {
+      data: req.file.buffer,
+      mimetype: req.file.mimetype,
+      originalname: req.file.originalname,
+      size: req.file.size
+    });
+
+    res.json({ hash });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({ error: 'Failed to upload file' });
+  }
+});
+
+// Upload JSON to mock IPFS
+app.post('/api/ipfs/upload-json', (req, res) => {
+  try {
+    const { data } = req.body;
+    if (!data) {
+      return res.status(400).json({ error: 'No data provided' });
+    }
+
+    const hash = generateIPFSHash(data);
+    mockIPFS.set(hash, {
+      data: JSON.stringify(data),
+      mimetype: 'application/json'
+    });
+
+    res.json({ hash });
+  } catch (error) {
+    console.error('Error uploading JSON:', error);
+    res.status(500).json({ error: 'Failed to upload JSON' });
+  }
+});
+
+// Get file from mock IPFS
+app.get('/api/ipfs/:hash', (req, res) => {
+  try {
+    const { hash } = req.params;
+    const file = mockIPFS.get(hash);
+
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    if (file.mimetype === 'application/json') {
+      res.json(JSON.parse(file.data));
+    } else {
+      res.set({
+        'Content-Type': file.mimetype,
+        'Content-Disposition': `attachment; filename="${file.originalname || 'file'}"`
+      });
+      res.send(file.data);
+    }
+  } catch (error) {
+    console.error('Error retrieving file:', error);
+    res.status(500).json({ error: 'Failed to retrieve file' });
+  }
+});
+
+// Mock blockchain operations
+app.post('/api/blockchain/issue-certificate', (req, res) => {
+  try {
+    const {
+      studentAddress,
+      ipfsHash,
+      certificateType,
+      institutionName,
+      issuerAddress
+    } = req.body;
+
+    const certificate = {
+      tokenId: certificates.length + 1,
+      student: studentAddress,
+      ipfsHash,
+      certificateType,
+      institutionName,
+      issuer: issuerAddress,
+      timestamp: Math.floor(Date.now() / 1000),
+      isValid: true,
+      blockNumber: Math.floor(Math.random() * 1000000),
+      transactionHash: '0x' + crypto.randomBytes(32).toString('hex')
+    };
+
+    certificates.push(certificate);
+
+    res.json({
+      success: true,
+      tokenId: certificate.tokenId,
+      transactionHash: certificate.transactionHash
+    });
+  } catch (error) {
+    console.error('Error issuing certificate:', error);
+    res.status(500).json({ error: 'Failed to issue certificate' });
+  }
+});
+
+app.get('/api/blockchain/certificate/:tokenId', (req, res) => {
+  try {
+    const { tokenId } = req.params;
+    const certificate = certificates.find(cert => cert.tokenId === parseInt(tokenId));
+
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+
+    res.json(certificate);
+  } catch (error) {
+    console.error('Error getting certificate:', error);
+    res.status(500).json({ error: 'Failed to get certificate' });
+  }
+});
+
+app.get('/api/blockchain/student/:address/certificates', (req, res) => {
+  try {
+    const { address } = req.params;
+    const studentCertificates = certificates.filter(cert => 
+      cert.student.toLowerCase() === address.toLowerCase()
+    );
+
+    res.json(studentCertificates.map(cert => cert.tokenId));
+  } catch (error) {
+    console.error('Error getting student certificates:', error);
+    res.status(500).json({ error: 'Failed to get student certificates' });
+  }
+});
+
+app.get('/api/blockchain/institution/:address/certificates', (req, res) => {
+  try {
+    const { address } = req.params;
+    const institutionCertificates = certificates.filter(cert => 
+      cert.issuer.toLowerCase() === address.toLowerCase()
+    );
+
+    res.json(institutionCertificates.map(cert => cert.tokenId));
+  } catch (error) {
+    console.error('Error getting institution certificates:', error);
+    res.status(500).json({ error: 'Failed to get institution certificates' });
+  }
+});
+
+app.post('/api/blockchain/revoke-certificate', (req, res) => {
+  try {
+    const { tokenId, issuerAddress } = req.body;
+    const certificate = certificates.find(cert => cert.tokenId === parseInt(tokenId));
+
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+
+    if (certificate.issuer.toLowerCase() !== issuerAddress.toLowerCase()) {
+      return res.status(403).json({ error: 'Only the issuer can revoke this certificate' });
+    }
+
+    certificate.isValid = false;
+    certificate.revokedAt = Math.floor(Date.now() / 1000);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error revoking certificate:', error);
+    res.status(500).json({ error: 'Failed to revoke certificate' });
+  }
+});
+
+// Free certificates endpoint (would be populated by Discord bot)
+app.get('/api/free-certificates', (req, res) => {
+  try {
+    // Mock data - in production, this would come from the Discord bot scraper
+    const freeCertificates = [
+      {
+        id: '1',
+        title: 'Introduction to Machine Learning',
+        provider: 'Coursera',
+        description: 'Learn the fundamentals of machine learning with hands-on projects.',
+        url: 'https://coursera.org/learn/machine-learning',
+        category: 'Technology',
+        duration: '6 weeks',
+        level: 'Beginner',
+        rating: 4.8,
+        addedDate: new Date().toISOString(),
+        tags: ['AI', 'Python', 'Data Science']
+      }
+      // More certificates would be added by the Discord bot
+    ];
+
+    res.json(freeCertificates);
+  } catch (error) {
+    console.error('Error getting free certificates:', error);
+    res.status(500).json({ error: 'Failed to get free certificates' });
+  }
+});
+
+//  Discord bot webhook endpoint
+app.post('/api/discord/webhook', (req, res) => {
+  try {
+    const { certificates } = req.body;
+    
+    // In production, this would update the database with new certificates
+    // found by the Discord bot scraper
+    
+    console.log('Received new certificates from Discord bot:', certificates);
+    
+    res.json({ success: true, processed: certificates?.length || 0 });
+  } catch (error) {
+    console.error('Error processing Discord webhook:', error);
+    res.status(500).json({ error: 'Failed to process webhook' });
+  }
+});
+
+// Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('Server error:', error);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(PORT, () => {
-  console.log(`AI or Earth server running on port ${PORT}`);
-  console.log(`Real locations pool: ${mockRealLocations.length} images`);
-  console.log(`AI images pool: ${mockAIImages.length} images`);
+  console.log(`EduCert API server running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/api/health`);
 });
